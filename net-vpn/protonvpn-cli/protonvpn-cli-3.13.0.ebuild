@@ -9,19 +9,17 @@ inherit distutils-r1
 
 DESCRIPTION="ProtonVPN CLI client"
 HOMEPAGE="https://none.com"
-SRC_URI="https://github.com/ProtonVPN/linux-cli/archive/refs/tags/${PV}.tar.gz"
+SRC_URI="https://github.com/ProtonVPN/linux-cli/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-3+"
 SLOT="0"
 KEYWORDS="~amd64"
 
 DEPEND=""
-# Minimum versions set to the latest stable version on the gentoo repository at the time of creating the ebuild.
-# Chances are it will work with older versions.
 RDEPEND="${DEPEND}
-	>=net-vpn/protonvpn-nm-lib-3.11.0
-	>=app-misc/proton-python-client-0.7.1"
-BDEPEND=">=dev-python/pythondialog-3.5.3"
+	>=net-vpn/protonvpn-nm-lib-${PV}
+	>=dev-python/pythondialog-3.5.3"
+BDEPEND=""
 
 src_unpack() {
 	default
