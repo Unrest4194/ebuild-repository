@@ -1,0 +1,15 @@
+--- work/Makefile	2022-05-19 14:01:46.000000000 +0200
++++ files/Makefile	2022-07-17 12:25:18.949333492 +0200
+@@ -31,6 +31,12 @@
+ image-arch: DOCKER_FILE_SOURCE = Dockerfile.arch
+ image-arch: src = archlinux
+ 
++# CUSTOM
++# Create the image based on archlinux
++image-gentoo: image
++image-gentoo: DOCKER_FILE_SOURCE = Dockerfile.gentoo
++image-gentoo: src = gentoo
++
+ # Create the image based on fedora 36
+ image-fed36: image
+ image-fed36: DOCKER_FILE_SOURCE = Dockerfile.fed36

@@ -1,0 +1,32 @@
+#!/bin/bash -e
+
+# Script to handle the start-stop of the ProtonVPN CLI client,
+# since apparently they do not have one in their repository
+
+assert_nm_up() {
+	# This code is OpenRC-specific, it may be a good idea to do a variant of this script with a USE flag
+	service=NetworkManager
+	if rc-service $service status &> /dev/null; then
+		return
+	else
+		echo "ERROR: $(basename $0) requires service '$service' to be running to connect to a VPN." >&2
+		exit 1
+	fi
+}
+
+if [[ $# -gt 0 ]]; then
+	case $1 in
+		c|connect) assert_nm_up; must_print_logdir=1;;
+		login) must_print_logdir=1;;
+	esac
+fi
+
+# This new path enables the mocking of systemctl calls by protonvpn-nm-lib for non-systemd users
+new_path=/usr/bin/protonvpn-nm-lib:$PATH
+PATH=$new_path python -c $'from protonvpn_cli.main import main\nmain()' $*
+
+if [[ $must_print_logdir ]]; then
+	protonvpn_logdir="$(python -c $'from protonvpn_nm_lib.constants import PROTON_XDG_CACHE_HOME_LOGS as PATH\nprint(PATH)')"
+	echo "INFO: ProtonVPN components are expected to log their output under '$protonvpn_logdir'." >&2
+fi
+

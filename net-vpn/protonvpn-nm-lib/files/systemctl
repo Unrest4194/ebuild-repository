@@ -1,0 +1,81 @@
+#!/bin/bash -e
+
+# This script provides support for handling the ProtonVPN reconnection daemon by unpriviledged 
+# users when systemd is not installed. It offers the following functionalities:
+# 	- Starting the daemon
+# 	- Terminating the daemon
+#   - Reporting whether the daemon is or is not running as a particular user with the exit codes
+#	  expected by protonvpn_nm_lib
+#   - Succeeding without doing anything when daemon-reload is issued, since there is no service manager
+#     to be refreshed
+#
+# The expected use case is that it will be run by protonvpn_nm_lib, but nothing prevents
+# a user from running it to manage the process.
+
+daemon_pid_file="/run/user/$(id --user)/protonvpn_daemon_reconnector.pid"
+
+get_daemon_pid() {
+	daemon_pid=$(cat "$daemon_pid_file")
+}
+
+status() {
+	if [[ -a $daemon_pid_file ]]; then
+		get_daemon_pid
+		daemon_missing=$(ps $daemon_pid > /dev/null; echo $?)
+		if [[ $daemon_missing == 0 ]]; then
+			return 0
+		fi
+	fi
+
+	# Use same code expected from systemd's systemctl by protonvpn_nm_lib when the service is not running
+	return 3
+}
+
+start() {
+	echo "Starting daemon reconnector..." >&2
+	python <<< "import protonvpn_nm_lib.daemon.dbus_daemon_reconnector" &> /dev/null &
+	echo $! > "$daemon_pid_file"
+	echo "Daemon started with PID $!." >&2
+}
+
+stop() {
+	if [[ -a "$daemon_pid_file" ]]; then
+		if status; then
+			# Variable set on earlier call to status
+			daemon_pid=$(cat "$daemon_pid_file")
+			echo "Reconnector daemon seems to be running with PID '$daemon_pid'. It will be terminated." >&2
+			kill -s TERM $daemon_pid
+			echo "Daemon has been terminated." >&2
+		fi
+		rm "$daemon_pid_file"
+	fi
+}
+
+for i in $*; do
+	if [[ $i == protonvpn_reconnect ]]; then
+		target_service_found=1
+	fi
+done
+
+unhandled_args() {
+	echo "ERROR: arguments '$*' are not handled by the current version of this systemctl mock program." >&2
+	exit 1
+}
+
+# Check done just to make sure newer versions of protonvpn-nm-lib do not call any other services
+# we may need to handle separately
+if [[ $target_service_found ]]; then
+	for i in $*; do
+		case $i in
+			start) start; exit 0;;
+			stop) stop; exit 0;;
+			status) exit $(status; echo $?);;
+			daemon-reload) exit 0;;
+		esac
+	done
+
+	unhandled_args $*
+else
+	unhandled_args $*
+fi
+

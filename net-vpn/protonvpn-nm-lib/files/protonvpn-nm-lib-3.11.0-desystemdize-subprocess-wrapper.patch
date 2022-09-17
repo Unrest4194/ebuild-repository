@@ -1,0 +1,40 @@
+--- a/protonvpn_nm_lib/core/subprocess_wrapper.py	2022-05-31 16:19:23.000000000 +0200
++++ b/protonvpn_nm_lib/core/subprocess_wrapper.py	2022-08-05 02:49:03.835195292 +0200
+@@ -50,8 +50,13 @@
+             if not self.is_root_owned(path):
+                 continue
+ 
++            # Replace systemctl for protonvpn-daemon-reconnector
++            checked_binaries = self._acceptable_binaries.copy()
++            checked_binaries.remove("systemctl")
++            checked_binaries.add("protonvpn-daemon-reconnector")
++
+             # Check for all the binaries that we haven't matched yet
+-            for binary in self._acceptable_binaries.difference(
++            for binary in checked_binaries.difference(
+                 self._path_to_binaries.keys()
+             ):
+                 binary_path_candidate = os.path.join(path, binary)
+@@ -98,6 +103,17 @@
+         ):
+             raise ValueError("args should be a non-empty list of string")
+ 
++        if args[0] == 'systemctl':
++            matched = False
++            for i in ['start', 'stop', 'status', 'daemon-reload']:
++                if i in args:
++                    args = ['protonvpn-daemon-reconnector', i]
++                    matched = True
++                    break
++            if not matched:
++                raise Exception(
++                    "Cannot translate command '{}'".format(args))
++
+         if args[0] not in self._path_to_binaries:
+             raise ValueError(
+                 "{!r} is not an acceptable binary".format(args[0])
+@@ -121,3 +137,4 @@
+             )
+ 
+ subprocess = SubprocessWrapper() # noqa
++
