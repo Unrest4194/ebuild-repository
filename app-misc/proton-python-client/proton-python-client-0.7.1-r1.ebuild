@@ -7,7 +7,7 @@ PYTHON_COMPAT=( python3_10 )
 
 inherit distutils-r1
 
-DESCRIPTION="Provon Python Client"
+DESCRIPTION="Proton Python Client"
 HOMEPAGE=""
 SRC_URI="https://github.com/ProtonMail/proton-python-client/archive/refs/tags/${PV}.tar.gz"
 
@@ -23,6 +23,7 @@ RDEPEND="${DEPEND}
 	>=dev-python/python-gnupg-0.4.9
 	>=dev-python/pyopenssl-22.0.0
 	>=dev-python/bcrypt-3.2.2
-	>=dev-python/distro-1.7.0"
+	>=dev-python/distro-1.7.0
+	>=dev-python/dnspython-2.2.1-r1"
 BDEPEND=""
 
